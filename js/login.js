@@ -15,14 +15,10 @@ $(document).ready(function() {
 
                 console.log("Response:", res);
 
+                // Inside the AJAX success function:
                 if (res.status === "success") {
-
-                    // Save session
-                    localStorage.setItem("user_id", res.user_id);
-                    localStorage.setItem("session_id", res.session_id);
-
+                    localStorage.setItem("session_id", res.session_id); // This is our Redis key
                     window.location.href = "profile.html";
-
                 } else {
                     alert(res.msg);
                 }
