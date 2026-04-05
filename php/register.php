@@ -2,17 +2,18 @@
 header('Content-Type: application/json');
 
 // 1. Get variables (with fallbacks to avoid the 'Undefined' warning)
+// Use Railway's injected variables
 $host = $_ENV['MYSQLHOST'] ?? '';
 $user = $_ENV['MYSQLUSER'] ?? '';
 $pass = $_ENV['MYSQLPASSWORD'] ?? '';
 $db   = $_ENV['MYSQLDATABASE'] ?? '';
 $port = (int)($_ENV['MYSQLPORT'] ?? 3306);
 
-// 2. Connect
+// This is line 12:
 $conn = new mysqli($host, $user, $pass, $db, $port);
 
 if ($conn->connect_error) {
-    echo json_encode(["status" => "error", "message" => "Connection failed"]);
+    echo json_encode(["status" => "error", "message" => "DB connection failed"]);
     exit;
 }
 
