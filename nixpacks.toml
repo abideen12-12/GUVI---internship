@@ -1,0 +1,5 @@
+[variables]
+    NIXPACKS_PHP_EXTENSIONS = 'mysqli, mongodb, redis'
+
+[phases.setup]
+    nixPkgs = ['...', 'php82Extensions.mysqli', 'php82Extensions.mongodb', 'php82Extensions.redis']
