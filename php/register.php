@@ -1,27 +1,26 @@
 <?php
 header('Content-Type: application/json');
 
-// 1. Connection using Railway Environment Variables
-// Note: (int) is required for the PORT
-$conn = new mysqli(
-    $_ENV['MYSQLHOST'], 
-    $_ENV['MYSQLUSER'], 
-    $_ENV['MYSQLPASSWORD'], 
-    $_ENV['MYSQLDATABASE'], 
-    (int)$_ENV['MYSQLPORT']
-);
+// 1. Get variables (with fallbacks to avoid the 'Undefined' warning)
+$host = $_ENV['MYSQLHOST'] ?? '';
+$user = $_ENV['MYSQLUSER'] ?? '';
+$pass = $_ENV['MYSQLPASSWORD'] ?? '';
+$db   = $_ENV['MYSQLDATABASE'] ?? '';
+$port = (int)($_ENV['MYSQLPORT'] ?? 3306);
+
+// 2. Connect
+$conn = new mysqli($host, $user, $pass, $db, $port);
 
 if ($conn->connect_error) {
     echo json_encode(["status" => "error", "message" => "Connection failed"]);
     exit;
 }
 
-// 2. Get Input
+// 3. RULE: Use Prepared Statements for Register
 $username = $_POST['username'] ?? '';
 $email = $_POST['email'] ?? '';
 $password = password_hash($_POST['password'] ?? '', PASSWORD_DEFAULT);
 
-// 3. RULE: Must use Prepared Statements
 $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
 $stmt->bind_param("sss", $username, $email, $password);
 
