@@ -1,11 +1,13 @@
 <?php
+require_once 'config.php';
 header('Content-Type: application/json');
-// 1. MySQL for auth
-$conn = new mysqli($_ENV['MYSQLHOST'], $_ENV['MYSQLUSER'], $_ENV['MYSQLPASSWORD'], $_ENV['MYSQLDATABASE'], $_ENV['MYSQLPORT']);
+
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, (int)DB_PORT);
 
 $email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
 
+// RULE: Prepared Statements
 $stmt = $conn->prepare("SELECT id, password FROM users WHERE email = ?");
 $stmt->bind_param("s", $email);
 $stmt->execute();
@@ -13,16 +15,21 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
 if ($user && password_verify($password, $user['password'])) {
-    // 2. Redis for session (Generating a simple token)
     $token = bin2hex(random_bytes(16));
-    $redis = new Redis();
-    $redis->connect($_ENV['REDISHOST'], $_ENV['REDISPORT']);
-    $redis->auth($_ENV['REDISPASSWORD']);
-    $redis->setex("session:$token", 3600, $user['id']); // Store for 1 hour
-
-    // 3. Return token for localStorage
-    echo json_encode(["status" => "success", "token" => $token]);
+    
+    // Connect to Redis using Predis (as per your composer.json)
+    try {
+        $redis = new Predis\Client(REDIS_URL);
+        $redis->setex("session:$token", 3600, $user['id']);
+        
+        echo json_encode([
+            "status" => "success", 
+            "session_id" => $token, // Match JS expectation
+            "user_id" => $user['id']
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(["status" => "error", "msg" => "Redis Connection Failed"]);
+    }
 } else {
-    echo json_encode(["status" => "error", "message" => "Invalid credentials"]);
+    echo json_encode(["status" => "error", "msg" => "Invalid email or password"]);
 }
-?>
