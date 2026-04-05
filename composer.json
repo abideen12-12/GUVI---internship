@@ -1,15 +1,10 @@
 {
-"require": {
-    "php": "^8.2",
-    "mongodb/mongodb": "^2.0",
-    "predis/predis": "^2.2",
-    "ext-mysqli": "*",
-    "ext-mongodb": "*",
-    "ext-redis": "*"
-},
-  "config": {
-        "platform": {
-            "ext-mongodb": "1.16.0"
-        }
+    "require": {
+        "php": "^8.2",
+        "mongodb/mongodb": "^2.0",
+        "predis/predis": "^2.2",
+        "ext-mysqli": "*",
+        "ext-mongodb": "*",
+        "ext-redis": "*"
     }
-}
+}   
