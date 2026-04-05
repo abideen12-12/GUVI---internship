@@ -1,66 +1,40 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 header('Content-Type: application/json');
+session_start();
 
-require __DIR__ . '/../vendor/autoload.php';
+// 1. Include config and autoloader
+require_once __DIR__ . '/config.php';
 
-use Predis\Client;
+try {
+    // 2. Connect to MongoDB
+    $client = new MongoDB\Client(MONGO_URI);
+    $collection = $client->user_auth->users;
 
-// 🔹 MySQL connection
-$conn = new mysqli("localhost", "root", "", "user_auth");
+    // 3. Get Input
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
 
-if ($conn->connect_error) {
-    echo json_encode(["status" => "error", "msg" => "DB connection failed"]);
-    exit;
-}
-
-// 🔹 Get POST data safely
-$email = $_POST['email'] ?? '';
-$password = $_POST['password'] ?? '';
-
-if (!$email || !$password) {
-    echo json_encode(["status" => "error", "msg" => "Missing email or password"]);
-    exit;
-}
-
-// 🔹 Prepared statement
-$stmt = $conn->prepare("SELECT id, password FROM users WHERE email=?");
-$stmt->bind_param("s", $email);
-$stmt->execute();
-
-$result = $stmt->get_result();
-
-if ($row = $result->fetch_assoc()) {
-
-    if (password_verify($password, $row['password'])) {
-
-        $redis = new Client([
-            'scheme' => 'tcp',
-            'host'   => '127.0.0.1',
-            'port'   => 6379,
-        ]);
-
-        //Generate session ID
-        $session_id = bin2hex(random_bytes(16));
-
-        $redis->set($session_id, $row['id']);
-
-        //Expiry in 1hour
-        $redis->expire($session_id, 3600);
-
-        echo json_encode([
-            "status" => "success",
-            "user_id" => $row['id'],
-            "session_id" => $session_id
-        ]);
-
-    } else {
-        echo json_encode(["status" => "error", "msg" => "Wrong password"]);
+    if (empty($email) || empty($password)) {
+        echo json_encode(["status" => "error", "message" => "Please fill in all fields"]);
+        exit;
     }
 
-} else {
-    echo json_encode(["status" => "error", "msg" => "User not found"]);
+    // 4. Find user by email
+    $user = $collection->findOne(['email' => $email]);
+
+    if ($user && password_verify($password, $user['password'])) {
+        // Success! Set session variables
+        $_SESSION['user_id'] = (string)$user['_id'];
+        $_SESSION['username'] = $user['username'];
+        
+        echo json_encode(["status" => "success"]);
+    } else {
+        // Failure: User not found or password wrong
+        echo json_encode(["status" => "error", "message" => "Invalid email or password"]);
+    }
+
+} catch (Exception $e) {
+    error_log($e->getMessage());
+    echo json_encode(["status" => "error", "message" => "Database error"]);
 }
 ?>
