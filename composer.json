@@ -1,7 +1,7 @@
-{
-    "require": {
-        "php": "^8.2",
-        "mongodb/mongodb": "^2.0",
-        "ext-mongodb": "*"
-    }
+"require": {
+    "php": "^8.2",
+    "mongodb/mongodb": "^2.0",
+    "ext-mysqli": "*",
+    "ext-mongodb": "*",
+    "ext-redis": "*"
 }
